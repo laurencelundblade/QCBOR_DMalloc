@@ -55,7 +55,7 @@ static void MemMallocDestructor(void *ctx)
 /*
  Public function. See qcbor.h
  */
-QCBORStringAllocator *QCBORDecode_MakeMallocStringAllocator()
+QCBORStringAllocator *QCBOR_DMalloc()
 {
     QCBORStringAllocator *pAllocaterContext = malloc(sizeof(QCBORStringAllocator));
     if(pAllocaterContext) {

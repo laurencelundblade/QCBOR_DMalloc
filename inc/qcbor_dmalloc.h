@@ -52,7 +52,7 @@
  freed. They are marked by uDataAlloc and uLabelAlloc
  in QCBORItem.
  */
-QCBORStringAllocator *QCBORDecode_MakeMallocStringAllocator(void);
+QCBORStringAllocator *QCBOR_DMalloc(void);
 
 
 #endif /* qcbor_decode_malloc_h */

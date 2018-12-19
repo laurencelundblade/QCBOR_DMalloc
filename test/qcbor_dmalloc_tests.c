@@ -69,7 +69,7 @@ int MallocAllStringsTest()
     const UsefulBufC CopyOf = UsefulBuf_Copy(CopyOfStorage, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(pValidMapEncoded));
 
     QCBORDecode_Init(&DC, CopyOf, QCBOR_DECODE_MODE_NORMAL);
-    QCBORStringAllocator *pAlloc = QCBORDecode_MakeMallocStringAllocator();
+    QCBORStringAllocator *pAlloc = QCBOR_DMalloc();
     QCBORDecode_SetUpAllocator(&DC, pAlloc, true);
 
 
