@@ -1,6 +1,6 @@
 /*==============================================================================
 
- Copyright (c) 2018, Laurence Lundblade.
+ Copyright (c) 2018-2019, Laurence Lundblade.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -30,44 +30,42 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. ==============================================================================*/
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ==============================================================================*/
 
 #include "qcbor_dmalloc.h"
 #include <stdlib.h> // for realloc and free
 
-static UsefulBuf MemMallocAlloc(void *ctx, void *pOldMem, size_t uNewSize)
+
+static UsefulBuf MemMallocFunction(void *pCtx, void *pOldMem, size_t uNewSize)
 {
-    (void)ctx;
-    void *pNewMem = realloc(pOldMem, uNewSize);
-    return (UsefulBuf){pNewMem, uNewSize};
+   (void)pCtx;
+
+   if(uNewSize) {
+      // ALLOCATION AND REALLOCATION MODE
+      void *pNewMem = realloc(pOldMem, uNewSize);
+      return (UsefulBuf){pNewMem, uNewSize};
+   } else {
+      if(pOldMem) {
+         // FREE MODE
+         free(pOldMem);
+      } else {
+         // DESTRUCT MODE
+         // Nothing to do for this allocator
+      }
+   }
+   return NULLUsefulBuf;
 }
 
-static void MemMallocFree(void *ctx, void *old)
-{
-    (void)ctx;
-    free(old);
-}
 
-static void MemMallocDestructor(void *ctx)
-{
-    free(ctx);
-}
 /*
  Public function. See qcbor.h
  */
-QCBORStringAllocator *QCBOR_DMalloc()
+void QCBOR_DMalloc(QCBORStringAllocate *ppfAllocator, void **ppContext)
 {
-    QCBORStringAllocator *pAllocaterContext = malloc(sizeof(QCBORStringAllocator));
-    if(pAllocaterContext) {
-        pAllocaterContext->fAllocate   = MemMallocAlloc;
-        pAllocaterContext->fFree       = MemMallocFree;
-        pAllocaterContext->fDestructor = MemMallocDestructor;
-        pAllocaterContext->pAllocaterContext = pAllocaterContext; // So that destructor can work.
-    }
-
-    return pAllocaterContext;
+   *ppfAllocator = MemMallocFunction;
+   *ppContext    = NULL; // No context needed. 
 }
 
-
-
+   
 

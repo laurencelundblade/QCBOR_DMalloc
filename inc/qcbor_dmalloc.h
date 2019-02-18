@@ -1,6 +1,6 @@
 /*==============================================================================
  
- Copyright (c) 2018, Laurence Lundblade.
+ Copyright (c) 2018-2019, Laurence Lundblade.
  All rights reserved.
  
  Redistribution and use in source and binary forms, with or without
@@ -36,23 +36,26 @@
 
 
 /**
- @brief This returns a string allocator that uses malloc
+ @brief This returns a string allocator that uses malloc.
  
- @return pointer to string allocator or NULL
+ @param[out] pfAllocator  Place where pointer to allocate
+                          function is returned.
+ @param[out] ppCtx        Place where pointer to allocate
+                          context is returned.
  
- Call this to get the string allocator and then configure it into
- the decoder by calling QCBORDecode_SetUpAllocator().  If you
- don't call this, there will be no dependency on malloc
- in QCBOR. Some deployments of QCBOR might even exclude
- the implementation of this function if they don't have
- malloc() at all.
  
- If you do set up this malloc-based string allocator, then
- every string marked as allocated in a QCBORItem must be
- freed. They are marked by uDataAlloc and uLabelAlloc
- in QCBORItem.
+ Call this to get the string allocator and then configure it into the
+ decoder by calling QCBORDecode_SetUpAllocator().  If you don't call
+ this, there will be no dependency on malloc in QCBOR.
+ 
+ If you do set up this malloc-based string allocator, then \c free()
+ must be called on every string marked as allocated in a \ref
+ QCBORItem. They are marked by \c uDataAlloc and \c uLabelAlloc in
+ \ref QCBORItem.
+ 
+ An older version of QCBOR supported a different form of of the string
+ allocator. They are not compatible.
  */
-QCBORStringAllocator *QCBOR_DMalloc(void);
-
+void QCBOR_DMalloc(QCBORStringAllocate *pfAllocator, void **ppCtx);
 
 #endif /* qcbor_decode_malloc_h */

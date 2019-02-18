@@ -1,6 +1,6 @@
 /*==============================================================================
 
- Copyright (c) 2018, Laurence Lundblade.
+ Copyright (c) 2018-2019, Laurence Lundblade.
  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -60,67 +60,79 @@ static uint8_t pValidMapEncoded[] = {
 #define UNCONST_POINTER(ptr)    ((void *)(ptr))
 
 
+
 int MallocAllStringsTest()
 {
-    QCBORDecodeContext DC;
-
-    // Next parse, save pointers to a few strings, destroy original and see all is OK.
-    UsefulBuf_MAKE_STACK_UB(CopyOfStorage, 160);
-    const UsefulBufC CopyOf = UsefulBuf_Copy(CopyOfStorage, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(pValidMapEncoded));
-
-    QCBORDecode_Init(&DC, CopyOf, QCBOR_DECODE_MODE_NORMAL);
-    QCBORStringAllocator *pAlloc = QCBOR_DMalloc();
-    QCBORDecode_SetUpAllocator(&DC, pAlloc, true);
-
-
-    int nCBORError;
-    QCBORItem Item1, Item2, Item3, Item4;
-    if((nCBORError = QCBORDecode_GetNext(&DC, &Item1)))
-        return nCBORError;
-    if(Item1.uDataType != QCBOR_TYPE_MAP ||
-       Item1.val.uCount != 3)
-        return -1;
-    if((nCBORError = QCBORDecode_GetNext(&DC, &Item1)))
-        return nCBORError;
-    if((nCBORError = QCBORDecode_GetNext(&DC, &Item2)))
-        return nCBORError;
-    if((nCBORError = QCBORDecode_GetNext(&DC, &Item3)))
-        return nCBORError;
-    if((nCBORError = QCBORDecode_GetNext(&DC, &Item4)))
-        return nCBORError;
-
-    UsefulBuf_Set(CopyOfStorage, '_');
-
-    if(Item1.uLabelType != QCBOR_TYPE_TEXT_STRING ||
-       Item1.label.string.len != 13 ||
-       Item1.uDataType != QCBOR_TYPE_INT64 ||
-       Item1.val.int64 != 42 ||
-       memcmp(Item1.label.string.ptr, "first integer", 13))
-        return -1;
-
-    if(Item2.uLabelType != QCBOR_TYPE_TEXT_STRING ||
-       Item2.label.string.len != 23 ||
-       memcmp(Item2.label.string.ptr, "an array of two strings", 23) ||
-       Item2.uDataType != QCBOR_TYPE_ARRAY ||
-       Item2.val.uCount != 2)
-        return -1;
-
-    if(Item3.uDataType != QCBOR_TYPE_TEXT_STRING ||
-       Item3.val.string.len != 7 ||
-       memcmp(Item3.val.string.ptr, "string1", 7))
-        return -1;
-
-    if(Item4.uDataType != QCBOR_TYPE_TEXT_STRING ||
-       Item4.val.string.len != 7 ||
-       memcmp(Item4.val.string.ptr, "string2", 7))
-        return -1;
-
-    (void)QCBORDecode_Finish(&DC);
-
-    free(UNCONST_POINTER(Item1.label.string.ptr));
-    free(UNCONST_POINTER(Item2.label.string.ptr));
-    free(UNCONST_POINTER(Item3.val.string.ptr));
-    free(UNCONST_POINTER(Item4.val.string.ptr));
-
-    return 0;
+   QCBORDecodeContext DC;
+   
+   // Next parse, save pointers to a few strings, destroy original and see all is OK.
+   UsefulBuf_MAKE_STACK_UB(CopyOfStorage, 160);
+   const UsefulBufC CopyOf = UsefulBuf_Copy(CopyOfStorage,
+                                            UsefulBuf_FROM_BYTE_ARRAY_LITERAL(pValidMapEncoded));
+   
+   QCBORDecode_Init(&DC, CopyOf, QCBOR_DECODE_MODE_NORMAL);
+   QCBORStringAllocate pAlloc;
+   void *pAllocCtx;
+   QCBOR_DMalloc(&pAlloc, &pAllocCtx);
+   QCBORDecode_SetUpAllocator(&DC, pAlloc, pAllocCtx, true);
+   
+   
+   int nCBORError;
+   QCBORItem Item1, Item2, Item3, Item4;
+   if((nCBORError = QCBORDecode_GetNext(&DC, &Item1)))
+      return nCBORError;
+   if(Item1.uDataType != QCBOR_TYPE_MAP ||
+      Item1.val.uCount != 3)
+      return -1;
+   if((nCBORError = QCBORDecode_GetNext(&DC, &Item1)))
+      return nCBORError;
+   if((nCBORError = QCBORDecode_GetNext(&DC, &Item2)))
+      return nCBORError;
+   if((nCBORError = QCBORDecode_GetNext(&DC, &Item3)))
+      return nCBORError;
+   if((nCBORError = QCBORDecode_GetNext(&DC, &Item4)))
+      return nCBORError;
+   
+   UsefulBuf_Set(CopyOfStorage, '_');
+   
+   if(Item1.uLabelType != QCBOR_TYPE_TEXT_STRING ||
+      Item1.label.string.len != 13 ||
+      Item1.uDataType != QCBOR_TYPE_INT64 ||
+      Item1.val.int64 != 42 ||
+      Item1.uLabelAlloc == 0 ||
+      Item1.uDataAlloc != 0 ||
+      memcmp(Item1.label.string.ptr, "first integer", 13))
+      return -1;
+   
+   if(Item2.uLabelType != QCBOR_TYPE_TEXT_STRING ||
+      Item2.label.string.len != 23 ||
+      memcmp(Item2.label.string.ptr, "an array of two strings", 23) ||
+      Item2.uDataType != QCBOR_TYPE_ARRAY ||
+      Item2.uLabelAlloc == 0 ||
+      Item2.uDataAlloc != 0 ||
+      Item2.val.uCount != 2)
+      return -1;
+   
+   if(Item3.uDataType != QCBOR_TYPE_TEXT_STRING ||
+      Item3.val.string.len != 7 ||
+      Item3.uLabelAlloc != 0 ||
+      Item3.uDataAlloc == 0 ||
+      memcmp(Item3.val.string.ptr, "string1", 7))
+      return -1;
+   
+   if(Item4.uDataType != QCBOR_TYPE_TEXT_STRING ||
+      Item4.val.string.len != 7 ||
+      Item4.uLabelAlloc != 0 ||
+      Item4.uDataAlloc == 0 ||
+      memcmp(Item4.val.string.ptr, "string2", 7))
+      return -1;
+   
+   (void)QCBORDecode_Finish(&DC);
+   
+   free(UNCONST_POINTER(Item1.label.string.ptr));
+   free(UNCONST_POINTER(Item2.label.string.ptr));
+   free(UNCONST_POINTER(Item3.val.string.ptr));
+   free(UNCONST_POINTER(Item4.val.string.ptr));
+   
+   return 0;
 }
